@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PaperPulse - Daily Research Feed</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 2px solid #333;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .meta {
+            color: #888;
+            font-size: 0.9em;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .stat {
+            background: #1a1a1a;
+            padding: 15px 25px;
+            border-radius: 8px;
+            border: 1px solid #333;}
+        
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .paper-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        
+        .paper-card:hover {
+            transform: translateY(-2px);
+            border-color: #667eea;
+        }
+        
+        .paper-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        
+        .paper-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #fff;
+            flex: 1;
+        }
+        
+        .score-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-left: 15px;
+        }
+        
+        .paper-meta {
+            color: #888;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+        
+        .source-tag {
+            display: inline-block;
+            background: #2a2a2a;
+            padding: 3px 10px;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        
+        .quick-summary {
+            color: #b0b0b0;
+            margin: 15px 0;
+            padding: 15px;
+            background: #151515;
+            border-left: 3px solid #667eea;border-radius: 4px;
+        }
+        
+        .detailed-content {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+        }
+        
+        .detailed-content.expanded {
+            display: block;
+        }
+        
+        .detailed-summary {
+            color: #c0c0c0;
+            margin: 15px 0;
+            line-height: 1.8;
+        }
+        
+        .links {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .link-btn {
+            padding: 8px 16px;
+            background: #2a2a2a;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9em;
+            transition: background 0.2s;
+        }
+        
+        .link-btn:hover {
+            background: #333;
+        }
+        
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 0.9em;
+            padding: 8px 0;
+            text-decoration: underline;
+        }
+        
+        .toggle-btn:hover {
+            color: #764ba2;
+        }
+        
+        @media (prefers-color-scheme: light) {
+            body { background: #f5f5f5; color: #333; }
+            .paper-card { background: white; border-color: #ddd; }
+            .stat { background: white; border-color: #ddd; }
+            .quick-summary { background: #f9f9f9; }
+            .source-tag { background: #e0e0e0; }
+            .link-btn { background: #e0e0e0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 PaperPulse</h1>
+            <p class="meta">Your Daily AI Research Feed</p>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">{{ filtered_papers }}</div>
+                    <div>Recommended</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">{{ total_papers }}</div>
+                    <div>Scanned</div>
+                </div>
+            </div>
+            <p class="meta">Last updated: {{ generated_at[:10] }}</p>
+        </header>
+        
+        <main>
+            {% for paper in papers %}
+            <div class="paper-card">
+                <div class="paper-header">
+                    <h2 class="paper-title">{{ paper.title }}</h2>
+                    <span class="score-badge">{{ "%.1f"|format(paper.relevance_score) }}</span>
+                </div>
+                
+                <div class="paper-meta">
+                    <span class="source-tag">{{ paper.source }}</span>
+                    <span>{{ paper.authors[:3]|join(', ') }}{% if paper.authors|length > 3 %} et al.{% endif %}</span>
+                </div>
+                
+                <div class="quick-summary">
+                    <strong>Quick Take:</strong> {{ paper.quick_summary }}
+                </div>
+                
+                <button class="toggle-btn" onclick="toggleDetails(this)">
+                    ▼ Show detailed analysis
+                </button>
+                
+                <div class="detailed-content">
+                    <div class="detailed-summary">
+                        <strong>Detailed Summary:</strong><br>
+                        {{ paper.detailed_summary }}
+                    </div>
+                    
+                    <div class="links">
+                        <a href="{{ paper.url }}" target="_blank" class="link-btn">View Paper</a>
+                        <a href="{{ paper.pdf_url }}" target="_blank" class="link-btn">PDF</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </main>
+    </div>
+    
+    <script>
+        function toggleDetails(btn) {
+            const content = btn.nextElementSibling;
+            content.classList.toggle('expanded');
+            btn.textContent = content.classList.contains('expanded') 
+                ? '▲ Hide detailed analysis' 
+                : '▼ Show detailed analysis';
+        }
+    </script>
+</body>
+</html>
