@@ -1,0 +1,25 @@
+name: Daily Paper Fetch
+
+on:
+  schedule:
+    # Run daily at UTC midnight
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # Allow manual trigger
+
+jobs:
+  fetch-papers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call paper fetch API
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -n "$VERCEL_URL" ]; then
+            curl -X POST "https://$VERCEL_URL/api/cron/fetch-papers" \
+              -H "Authorization: Bearer $CRON_SECRET" \
+              -H "Content-Type: application/json"
+          else
+            echo "VERCEL_URL not configured, skipping fetch"
+          fi

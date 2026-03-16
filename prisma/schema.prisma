@@ -1,0 +1,67 @@
+// Prisma schema for Paper Pulse
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Paper {
+  id          String   @id @default(uuid())
+  title       String
+  authors     String[]
+  abstract    String?
+  source      String   // 'arxiv' | 'openreview'
+  sourceUrl   String?
+  pdfUrl      String?
+  tags        String[]
+  highlights  String[]
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  chatHistory ChatHistory[]
+  annotations Annotation[]
+
+  @@index([publishedAt])
+  @@index([source])
+}
+
+model UserPreferences {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  keywords   String[]
+  authors    String[]
+  categories String[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ChatHistory {
+  id        String   @id @default(uuid())
+  paperId   String
+  paper     Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  role      String   // 'user' | 'assistant'
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([paperId])
+  @@index([createdAt])
+}
+
+model Annotation {
+  id          String   @id @default(uuid())
+  paperId     String
+  paper       Paper    @relation(fields: [paperId], references: [id], onDelete: Cascade)
+  content     String   // Annotation/idea content
+  color       String   @default("yellow") // yellow, pink, blue, green, purple
+  position    Int?     // For highlight position in text (optional)
+  pageNumber  Int?     // Page number if applicable
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([paperId])
+  @@index([createdAt])
+}
