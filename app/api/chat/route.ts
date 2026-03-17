@@ -1,9 +1,15 @@
 import { NextRequest } from "next/server";
 import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import { saveChatMessage } from "@/lib/actions";
 
 const USE_MOCK_DATA = process.env.USE_MOCK_DATA === "true";
+
+// Configure OpenAI client to use SiliconFlow
+const openai = createOpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
+});
 
 export const runtime = "nodejs";
 
@@ -93,18 +99,34 @@ For more specific details about the methodology, results, or conclusions, you mi
       });
     }
 
-    // Use Vercel AI SDK to generate streaming response
-    const { text } = await generateText({
-      model: openai("gpt-4o-mini"),
-      system: systemPrompt,
-      messages: [
-        ...history.map((msg: { role: string; content: string }) => ({
-          role: msg.role as "user" | "assistant",
-          content: msg.content,
-        })),
-        { role: "user", content: userPrompt },
-      ],
+    // Use SiliconFlow API directly
+    const response = await fetch("https://api.siliconflow.cn/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "Qwen/Qwen2.5-7B-Instruct",
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...history.map((msg: { role: string; content: string }) => ({
+            role: msg.role,
+            content: msg.content,
+          })),
+          { role: "user", content: userPrompt },
+        ],
+        stream: false,
+      }),
     });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`SiliconFlow API error: ${error}`);
+    }
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content || "No response generated";
 
     // Save chat messages to database
     if (paperId) {
