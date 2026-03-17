@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 
 interface FortuneCalendarProps {
   checkInDates: string[]; // Array of date strings (ISO date only)
@@ -39,24 +38,15 @@ export function FortuneCalendar({ checkInDates }: FortuneCalendarProps) {
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
-
   // Generate calendar days
   const calendarDays = useMemo(() => {
     const days: (number | null)[] = [];
-
-    // Add empty slots for days before the first day of month
     for (let i = 0; i < firstDayOfMonth; i++) {
       days.push(null);
     }
-
-    // Add days of the month
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(i);
     }
-
     return days;
   }, [firstDayOfMonth, daysInMonth]);
 
@@ -69,85 +59,108 @@ export function FortuneCalendar({ checkInDates }: FortuneCalendarProps) {
   const isCurrentMonth = year === today.getFullYear() && month === today.getMonth();
 
   return (
-    <Card className="w-[360px] h-[380px]">
-      <CardContent className="p-4 h-full flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <button
-            onClick={goToPrevMonth}
-            className="p-1 hover:bg-secondary rounded transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <div className="text-sm font-medium">
-            {year}年 {monthNames[month]}
-          </div>
-          <button
-            onClick={goToNextMonth}
-            className="p-1 hover:bg-secondary rounded transition-colors"
-            disabled={isCurrentMonth}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+    <div
+      className="w-[340px]"
+      style={{
+        background: "linear-gradient(145deg, #faf8f5 0%, #f5f0eb 100%)",
+        borderRadius: "28px",
+        boxShadow: "0 8px 32px rgba(139, 92, 70, 0.12), 0 2px 8px rgba(139, 92, 70, 0.08)",
+        padding: "24px"
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={goToPrevMonth}
+          className="p-2 hover:bg-amber-100 rounded-full transition-colors"
+          style={{ color: "#78716c" }}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <div className="text-sm font-medium" style={{ color: "#44403c" }}>
+          {year}年 {monthNames[month]}
         </div>
+        <button
+          onClick={goToNextMonth}
+          className="p-2 hover:bg-amber-100 rounded-full transition-colors disabled:opacity-30"
+          style={{ color: "#78716c" }}
+          disabled={isCurrentMonth}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
 
-        {/* Day labels */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {["日", "一", "二", "三", "四", "五", "六"].map((day, i) => (
+      {/* Day labels */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {["日", "一", "二", "三", "四", "五", "六"].map((day, i) => (
+          <div
+            key={i}
+            className="text-center text-xs font-medium"
+            style={{ color: "#a8a29e" }}
+          >
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {calendarDays.map((day, index) => {
+          if (day === null) {
+            return <div key={`empty-${index}`} className="h-8" />;
+          }
+
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const isCheckedIn = checkInSet.has(dateStr);
+          const isToday = isCurrentMonth && day === today.getDate();
+
+          return (
             <div
-              key={i}
-              className="text-center text-xs text-muted-foreground font-medium"
+              key={day}
+              className={`
+                h-8 flex items-center justify-center text-xs rounded-full relative
+                ${isCheckedIn ? "font-medium" : ""}
+              `}
+              style={{
+                background: isCheckedIn
+                  ? "linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%)"
+                  : isToday
+                    ? "rgba(251, 191, 36, 0.15)"
+                    : "transparent",
+                color: isCheckedIn
+                  ? "#fff"
+                  : isToday
+                    ? "#d97706"
+                    : "#78716c",
+                boxShadow: isCheckedIn ? "0 2px 8px rgba(245, 158, 11, 0.3)" : "none"
+              }}
+              title={isCheckedIn ? "今日已求签" : ""}
             >
               {day}
+              {isCheckedIn && (
+                <Sparkles className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 text-white" />
+              )}
             </div>
-          ))}
-        </div>
+          );
+        })}
+      </div>
 
-        {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1">
-          {calendarDays.map((day, index) => {
-            if (day === null) {
-              return <div key={`empty-${index}`} className="h-7" />;
-            }
-
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const isCheckedIn = checkInSet.has(dateStr);
-            const isToday = isCurrentMonth && day === today.getDate();
-
-            return (
-              <div
-                key={day}
-                className={`
-                  h-7 flex items-center justify-center text-xs rounded
-                  ${isCheckedIn
-                    ? "bg-primary text-primary-foreground font-medium"
-                    : isToday
-                      ? "border border-primary text-primary"
-                      : "text-muted-foreground"
-                  }
-                `}
-                title={isCheckedIn ? "已签到" : ""}
-              >
-                {day}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Stats */}
-        <div className="mt-3 pt-3 border-t border-border">
-          <div className="flex items-center justify-between text-xs">
-            <div>
-              <span className="text-muted-foreground">本月: </span>
-              <span className="font-medium">{currentMonthCheckIns} 天</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">总计: </span>
-              <span className="font-medium">{totalCheckIns} 天</span>
-            </div>
+      {/* Stats */}
+      <div
+        className="mt-4 pt-4"
+        style={{ borderTop: "1px solid #e7e5e4" }}
+      >
+        <div className="flex items-center justify-between text-xs">
+          <div>
+            <span style={{ color: "#a8a29e" }}>本月: </span>
+            <span className="font-medium" style={{ color: "#44403c" }}>{currentMonthCheckIns} 天</span>
+          </div>
+          <div>
+            <span style={{ color: "#a8a29e" }}>总计: </span>
+            <span className="font-medium" style={{ color: "#44403c" }}>{totalCheckIns} 天</span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
