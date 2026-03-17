@@ -252,50 +252,83 @@
 
 ## 技术架构
 
-<div style="
-  background: #0f0f23;
-  border-radius: 20px;
-  padding: 40px;
-  margin: 24px 0;
-  display: inline-block;
-">
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'darkMode': true, 'primaryColor': '#1e1e2e', 'primaryTextColor': '#cdd6f4', 'primaryBorderColor': '#6c7086', 'lineColor': '#6c7086', 'secondaryColor': '#313244', 'tertiaryColor': '#45475a', 'background': '#11111b', 'mainBkg': '#1e1e2e', 'nodeBorder': '#6c7086', 'clusterBkg': '#181825', 'clusterBorder': '#45475a', 'titleColor': '#f5e0dc', 'edgeLabelBackground': '#181825'}}}%%
+flowchart TB
+    subgraph Sources ["📥 数据源"]
+        direction LR
+        arxiv["📄 arXiv"]
+        openreview["📑 OpenReview"]
+    end
+
+    subgraph Core ["🧠 AI 核心"]
+        direction TB
+        llm["🤖 LLM 引擎<br/>GPT-4"]
+        rag["🔍 RAG 引擎"]
+        embed["📊 向量嵌入"]
+    end
+
+    subgraph Storage ["💾 存储层"]
+        direction LR
+        db["🐘 Supabase<br/>PostgreSQL"]
+        cache["📱 本地存储"]
+    end
+
+    subgraph UI ["🎨 用户界面"]
+        direction LR
+        web["🌐 Next.js<br/>仪表盘"]
+        chat["💬 AI 对话"]
+        fortune["🎋 每日运势"]
+        library["📚 文库"]
+    end
+
+    Sources --> Core
+    Core <--> Storage
+    Core --> UI
+
+    classDef source fill:#181825,stroke:#89b4fa,stroke-width:1px,color:#cdd6f4,rx:8,ry:8;
+    classDef core fill:#1e1e2e,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4,rx:8,ry:8;
+    classDef storage fill:#181825,stroke:#a6e3a1,stroke-width:1px,color:#cdd6f4,rx:8,ry:8;
+    classDef ui fill:#1e1e2e,stroke:#f9e2af,stroke-width:1px,color:#cdd6f4,rx:8,ry:8;
+
+    class arxiv,openreview source;
+    class llm,rag,embed core;
+    class db,cache storage;
+    class web,chat,fortune,library ui;
+```
 
 <div style="
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 32px;
-  margin-bottom: 32px;
+  margin-top: 32px;
 ">
 
 <div style="text-align: center;">
-  <div style="font-size: 48px;">⚡</div>
-  <div style="color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 8px;">Next.js 16</div>
-  <div style="color: rgba(255,255,255,0.4); font-size: 12px;">App Router</div>
+  <div style="font-size: 32px;">⚡</div>
+  <div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 4px;">Next.js 16</div>
 </div>
 
 <div style="text-align: center;">
-  <div style="font-size: 48px;">🛡️</div>
-  <div style="color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 8px;">TypeScript</div>
-  <div style="color: rgba(255,255,255,0.4); font-size: 12px;">Strict Mode</div>
+  <div style="font-size: 32px;">🛡️</div>
+  <div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 4px;">TypeScript</div>
 </div>
 
 <div style="text-align: center;">
-  <div style="font-size: 48px;">🎨</div>
-  <div style="color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 8px;">Tailwind CSS</div>
-  <div style="color: rgba(255,255,255,0.4); font-size: 12px;">Shadcn/UI</div>
+  <div style="font-size: 32px;">🎨</div>
+  <div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 4px;">Tailwind</div>
 </div>
 
 <div style="text-align: center;">
-  <div style="font-size: 48px;">🧠</div>
-  <div style="color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 8px;">OpenAI API</div>
-  <div style="color: rgba(255,255,255,0.4); font-size: 12px;">GPT-4</div>
+  <div style="font-size: 32px;">🧠</div>
+  <div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 4px;">OpenAI</div>
 </div>
 
 <div style="text-align: center;">
-  <div style="font-size: 48px;">💾</div>
-  <div style="color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 8px;">Supabase</div>
-  <div style="color: rgba(255,255,255,0.4); font-size: 12px;">PostgreSQL</div>
+  <div style="font-size: 32px;">💾</div>
+  <div style="color: rgba(255,255,255,0.8); font-size: 12px; margin-top: 4px;">Supabase</div>
+</div>
 </div>
 
 <div style="text-align: center;">
