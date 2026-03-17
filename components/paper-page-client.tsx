@@ -55,10 +55,10 @@ export function PaperPageClient({ paper }: PaperPageClientProps) {
       </Link>
 
       {/* Desktop Layout - Full width PDF view */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-[5mm]">
         {/* Left Column - Metadata */}
-        <div className="lg:col-span-2 order-2 lg:order-1">
-          <Card className="sticky top-20">
+        <div className="lg:col-span-3 order-2 lg:order-1 flex flex-col gap-[5mm]">
+          <Card className="flex-1 sticky top-20 overflow-auto">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs font-medium">详细信息</CardTitle>
             </CardHeader>
@@ -232,17 +232,19 @@ export function PaperPageClient({ paper }: PaperPageClientProps) {
           </Card>
 
           {/* Related Papers */}
-          <RelatedPapers currentPaper={paper} allPapers={allPapers} />
+          <div className="mt-[5mm]">
+            <RelatedPapers currentPaper={paper} allPapers={allPapers} />
+          </div>
         </div>
 
         {/* Middle Column - Content with Tabs - Wider */}
-        <div className="lg:col-span-7 order-1 lg:order-2">
+        <div className="lg:col-span-6 order-1 lg:order-2 overflow-hidden">
           <PaperContentTabs paper={paper} />
         </div>
 
         {/* Right Column - Chat */}
-        <div className="lg:col-span-3 order-3 lg:order-3">
-          <div className="h-[500px]">
+        <div className="lg:col-span-3 order-3 lg:order-3 flex flex-col">
+          <div className="flex-1 min-h-0">
             <ChatInterface paper={paper} />
           </div>
         </div>

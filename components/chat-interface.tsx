@@ -69,15 +69,15 @@ export function ChatInterface({ paper }: ChatInterfaceProps) {
   };
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="pb-3 border-b border-border">
+    <Card className="h-full flex flex-col overflow-hidden">
+      <CardHeader className="pb-3 border-b border-border flex-shrink-0">
         <CardTitle className="text-sm flex items-center gap-2">
           <Bot className="h-4 w-4 text-primary" />
           Ask about this paper
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+      <CardContent className="flex-1 flex flex-col p-0 min-h-0 overflow-hidden">
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">

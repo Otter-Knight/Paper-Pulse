@@ -1,23 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Sparkles, StickyNote, BookOpen } from "lucide-react";
+import { FileText, Sparkles, StickyNote, BookOpen, LayoutGrid } from "lucide-react";
 import { Paper } from "@/lib/actions";
 import { AISummary } from "@/components/ai-summary";
 import { StickyNotePanel } from "@/components/sticky-note";
 import { PDFViewer } from "@/components/pdf-viewer";
+import { AbstractWithTranslation } from "@/components/abstract-with-translation";
+import { PaperOverview } from "@/components/paper-overview";
 
 interface PaperContentTabsProps {
   paper: Paper;
 }
 
-type TabType = "abstract" | "pdf" | "summary" | "notes";
+type TabType = "abstract" | "overview" | "pdf" | "summary" | "notes";
 
 export function PaperContentTabs({ paper }: PaperContentTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>("abstract");
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: "abstract", label: "摘要", icon: <BookOpen className="h-3.5 w-3.5" /> },
+    { id: "overview", label: "速览", icon: <LayoutGrid className="h-3.5 w-3.5" /> },
     { id: "pdf", label: "PDF", icon: <FileText className="h-3.5 w-3.5" /> },
     { id: "summary", label: "AI摘要", icon: <Sparkles className="h-3.5 w-3.5" /> },
     { id: "notes", label: "笔记", icon: <StickyNote className="h-3.5 w-3.5" /> },
@@ -49,12 +52,16 @@ export function PaperContentTabs({ paper }: PaperContentTabsProps) {
       </div>
 
       {/* Tab Content */}
-      <div className="min-h-[400px]">
+      <div className="min-h-[400px] overflow-y-auto">
         {activeTab === "abstract" && (
           <div className="animate-fade-in">
-            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-              {paper.abstract || "暂无摘要"}
-            </p>
+            <AbstractWithTranslation paper={paper} />
+          </div>
+        )}
+
+        {activeTab === "overview" && (
+          <div className="animate-fade-in">
+            <PaperOverview paper={paper} />
           </div>
         )}
 

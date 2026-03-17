@@ -27,6 +27,21 @@ export function PDFViewer({ paper }: PDFViewerProps) {
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showNoteMenu, setShowNoteMenu] = useState(false);
 
+  // Check if this is an OpenReview paper (can't embed in iframe)
+  const isOpenReview = paper.source === "openreview" || paper.pdfUrl?.includes("openreview.net");
+  // For arXiv, convert PDF URL to embeddable format
+  const getEmbedUrl = (url: string | null) => {
+    if (!url) return null;
+    // arXiv PDFs can be embedded
+    if (url.includes("arxiv.org/pdf/")) {
+      return url;
+    }
+    // OpenReview PDFs cannot be embedded in iframe
+    return null;
+  };
+
+  const embedUrl = getEmbedUrl(paper.pdfUrl);
+
   const { getHighlightsForPaper, highlights } = useHighlightStore();
   const [paperHighlights, setPaperHighlights] = useState<any[]>([]);
 
@@ -73,6 +88,11 @@ export function PDFViewer({ paper }: PDFViewerProps) {
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + 25, 200));
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - 25, 50));
   const handleFullscreen = () => {
+    // For non-embedded PDFs, open in new tab
+    if (!embedUrl) {
+      window.open(paper.pdfUrl || paper.sourceUrl || "", "_blank");
+      return;
+    }
     const iframe = document.getElementById("pdf-frame");
     if (iframe?.requestFullscreen) {
       iframe.requestFullscreen();
@@ -247,16 +267,19 @@ export function PDFViewer({ paper }: PDFViewerProps) {
             )}
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={handleZoomOut}
-            disabled={zoom <= 50}
-          >
-            <ZoomOut className="h-3.5 w-3.5" />
-          </Button>
-          <span className="text-xs w-10 text-center">{zoom}%</span>
+          {/* Only show zoom controls for embeddable PDFs */}
+          {embedUrl && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={handleZoomOut}
+                disabled={zoom <= 50}
+              >
+                <ZoomOut className="h-3.5 w-3.5" />
+              </Button>
+              <span className="text-xs w-10 text-center">{zoom}%</span>
           <Button
             variant="ghost"
             size="icon"
@@ -265,7 +288,9 @@ export function PDFViewer({ paper }: PDFViewerProps) {
             disabled={zoom >= 200}
           >
             <ZoomIn className="h-3.5 w-3.5" />
-          </Button>
+              </Button>
+            </>
+          )}
           <Button
             variant="ghost"
             size="icon"
@@ -288,7 +313,36 @@ export function PDFViewer({ paper }: PDFViewerProps) {
           </div>
         )}
 
-        {error ? (
+        {/* OpenReview or non-embeddable PDF - show link */}
+        {isOpenReview || !embedUrl ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center p-6">
+              <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-sm text-muted-foreground mb-3">
+                {isOpenReview ? "OpenReview 论文请在新窗口中打开" : "无法嵌入显示此 PDF"}
+              </p>
+              <a
+                href={paper.pdfUrl || paper.sourceUrl || ""}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" />
+                在新窗口中打开 PDF
+              </a>
+              {paper.sourceUrl && (
+                <a
+                  href={paper.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mt-3 text-xs text-muted-foreground hover:text-primary hover:underline"
+                >
+                  或在 {paper.source === "openreview" ? "OpenReview" : "来源网站"} 查看
+                </a>
+              )}
+            </div>
+          </div>
+        ) : error ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center p-6">
               <p className="text-sm text-destructive mb-3">{error}</p>
@@ -306,7 +360,7 @@ export function PDFViewer({ paper }: PDFViewerProps) {
         ) : (
           <iframe
             id="pdf-frame"
-            src={`${paper.pdfUrl}#zoom=${zoom}`}
+            src={`${embedUrl}#zoom=${zoom}`}
             className="w-full h-full min-h-[500px]"
             onLoad={() => setIsLoading(false)}
             onError={() => {
