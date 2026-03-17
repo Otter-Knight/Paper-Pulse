@@ -12,7 +12,28 @@ export interface MockPaper {
   highlights: string[];
   publishedAt: string;
   createdAt: string;
+  venue?: string; // Added: conference or journal name like CVPR, NeurIPS, IEEE, etc.
 }
+
+// Common AI/ML venues
+export const VENUES = [
+  { id: "cvpr", name: "CVPR", category: "Computer Vision" },
+  { id: "iccv", name: "ICCV", category: "Computer Vision" },
+  { id: "eccv", name: "ECCV", category: "Computer Vision" },
+  { id: "neurips", name: "NeurIPS", category: "Machine Learning" },
+  { id: "iclr", name: "ICLR", category: "Machine Learning" },
+  { id: "icml", name: "ICML", category: "Machine Learning" },
+  { id: "aaai", name: "AAAI", category: "AI" },
+  { id: "ijcai", name: "IJCAI", category: "AI" },
+  { id: "acl", name: "ACL", category: "NLP" },
+  { id: "emnlp", name: "EMNLP", category: "NLP" },
+  { id: "naacl", name: "NAACL", category: "NLP" },
+  { id: "arxiv", name: "arXiv", category: "Preprint" },
+  { id: "openreview", name: "OpenReview", category: "Preprint" },
+  { id: "ieee", name: "IEEE", category: "Journal" },
+  { id: "nature", name: "Nature", category: "Journal" },
+  { id: "science", name: "Science", category: "Journal" },
+];
 
 export const mockPapers: MockPaper[] = [
   {
@@ -31,6 +52,7 @@ export const mockPapers: MockPaper[] = [
     ],
     publishedAt: "2024-01-15T12:00:00Z",
     createdAt: "2024-01-15T14:00:00Z",
+    venue: "NeurIPS",
   },
   {
     id: "2",
@@ -48,6 +70,7 @@ export const mockPapers: MockPaper[] = [
     ],
     publishedAt: "2024-01-14T12:00:00Z",
     createdAt: "2024-01-14T14:00:00Z",
+    venue: "ICML",
   },
   {
     id: "3",
@@ -65,6 +88,7 @@ export const mockPapers: MockPaper[] = [
     ],
     publishedAt: "2024-01-13T12:00:00Z",
     createdAt: "2024-01-13T14:00:00Z",
+    venue: "NeurIPS",
   },
   {
     id: "4",
@@ -82,6 +106,7 @@ export const mockPapers: MockPaper[] = [
     ],
     publishedAt: "2024-01-12T12:00:00Z",
     createdAt: "2024-01-12T14:00:00Z",
+    venue: "CVPR",
   },
   {
     id: "5",
@@ -99,6 +124,7 @@ export const mockPapers: MockPaper[] = [
     ],
     publishedAt: "2024-01-11T12:00:00Z",
     createdAt: "2024-01-11T14:00:00Z",
+    venue: "ACL",
   },
   {
     id: "6",
@@ -116,6 +142,7 @@ export const mockPapers: MockPaper[] = [
     ],
     publishedAt: "2024-01-10T12:00:00Z",
     createdAt: "2024-01-10T14:00:00Z",
+    venue: "EMNLP",
   },
   {
     id: "7",
@@ -133,6 +160,7 @@ export const mockPapers: MockPaper[] = [
     ],
     publishedAt: "2024-01-09T12:00:00Z",
     createdAt: "2024-01-09T14:00:00Z",
+    venue: "ICLR",
   },
   {
     id: "8",
@@ -150,6 +178,7 @@ export const mockPapers: MockPaper[] = [
     ],
     publishedAt: "2024-01-08T12:00:00Z",
     createdAt: "2024-01-08T14:00:00Z",
+    venue: "AAAI",
   },
 ];
 
@@ -196,22 +225,27 @@ export function getMockPaperById(id: string): MockPaper | undefined {
   return mockPapers.find((paper) => paper.id === id);
 }
 
-export function getPersonalizedPapers(keywords: string[], authors: string[], categories: string[]): MockPaper[] {
+export function getPersonalizedPapers(keywords: string[], authors: string[], categories: string[], venues: string[] = []): MockPaper[] {
   return mockPapers.filter((paper) => {
-    const matchesKeyword = keywords.some(
+    const matchesKeyword = keywords.length === 0 || keywords.some(
       (kw) =>
         paper.title.toLowerCase().includes(kw.toLowerCase()) ||
         paper.abstract.toLowerCase().includes(kw.toLowerCase()) ||
         paper.tags.some((tag) => tag.toLowerCase().includes(kw.toLowerCase()))
     );
-    const matchesAuthor = authors.some(
+    const matchesAuthor = authors.length === 0 || authors.some(
       (author) =>
         paper.authors.some((a) => a.toLowerCase().includes(author.toLowerCase()))
     );
-    const matchesCategory = categories.some(
+    const matchesCategory = categories.length === 0 || categories.some(
       (cat) =>
         paper.tags.some((tag) => tag.toLowerCase().includes(cat.toLowerCase()))
     );
-    return matchesKeyword || matchesAuthor || matchesCategory;
+    // Filter by venue if specified
+    const matchesVenue = venues.length === 0 || (paper.venue && venues.some(v =>
+      paper.venue?.toLowerCase().includes(v.toLowerCase())
+    ));
+
+    return matchesKeyword && matchesAuthor && matchesCategory && matchesVenue;
   });
 }

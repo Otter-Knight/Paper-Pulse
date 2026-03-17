@@ -18,6 +18,7 @@ export interface Paper {
   highlights: string[];
   publishedAt: Date | null;
   createdAt: Date;
+  venue?: string;
 }
 
 export interface UserPreferences {
@@ -26,6 +27,7 @@ export interface UserPreferences {
   keywords: string[];
   authors: string[];
   categories: string[];
+  venues?: string[];
 }
 
 function parsePaper(raw: any): Paper {
@@ -41,6 +43,7 @@ function parsePaper(raw: any): Paper {
     highlights: Array.isArray(raw.highlights) ? raw.highlights : [],
     publishedAt: raw.publishedAt ?? raw.published_at ?? null,
     createdAt: raw.createdAt ?? raw.created_at ?? new Date(),
+    venue: raw.venue ?? null,
   };
 }
 
@@ -121,7 +124,8 @@ export async function getPersonalizedFeed(preferences: UserPreferences): Promise
     const papers = getPersonalizedPapers(
       preferences.keywords,
       preferences.authors,
-      preferences.categories
+      preferences.categories,
+      preferences.venues || []
     );
     return papers as unknown as Paper[];
   }
@@ -148,13 +152,21 @@ export async function getPersonalizedFeed(preferences: UserPreferences): Promise
       return preferences.keywords.some((kw) => searchText.includes(kw.toLowerCase()));
     });
 
-    return keywordFiltered.map(parsePaper);
+    // Filter by venues if specified
+    const venueFiltered = keywordFiltered.filter((paper: any) => {
+      if (!preferences.venues || preferences.venues.length === 0) return true;
+      if (!paper.venue) return false;
+      return preferences.venues.some((v) => paper.venue.toLowerCase().includes(v.toLowerCase()));
+    });
+
+    return venueFiltered.map(parsePaper);
   } catch (error) {
     console.error("Error fetching personalized feed:", error);
     const papers = getPersonalizedPapers(
       preferences.keywords,
       preferences.authors,
-      preferences.categories
+      preferences.categories,
+      preferences.venues || []
     );
     return papers as unknown as Paper[];
   }

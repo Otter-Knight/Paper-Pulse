@@ -35,13 +35,13 @@ export function PaperCard({ paper, index = 0 }: PaperCardProps) {
         id: paper.id,
         title: paper.title,
         authors: paper.authors,
-        abstract: paper.abstract,
-        source: paper.source,
+        abstract: paper.abstract || "",
+        source: paper.source as "arxiv" | "openreview",
         sourceUrl: paper.sourceUrl || "",
         pdfUrl: paper.pdfUrl || "",
         tags: paper.tags,
         highlights: paper.highlights,
-        publishedAt: paper.publishedAt || "",
+        publishedAt: paper.publishedAt ? paper.publishedAt.toString() : "",
       });
     }
     setIsSaved(!isSaved);

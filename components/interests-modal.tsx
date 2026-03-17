@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, X, Clock, BookOpen } from "lucide-react";
+import { Settings, X, Clock, BookOpen, Tag, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PreferenceBuilder, PreferenceTagCard, generatePreferenceSuggestions } from "./preference-builder";
+import { usePreferenceStore, getSelectedKeywords, getSelectedVenues, getSelectedAuthors } from "@/lib/preference-store";
 
 interface InterestsModalProps {
   open: boolean;
@@ -15,6 +17,7 @@ interface InterestsModalProps {
     categories: string[];
     timeRange: string;
     sources: string[];
+    venues: string[];
   }) => void;
   initialPreferences?: {
     keywords: string[];
@@ -22,6 +25,7 @@ interface InterestsModalProps {
     categories: string[];
     timeRange?: string;
     sources?: string[];
+    venues?: string[];
   };
 }
 
@@ -47,18 +51,29 @@ export function InterestsModal({
   const [keywords, setKeywords] = useState<string[]>([]);
   const [authors, setAuthors] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [venues, setVenues] = useState<string[]>([]);
   const [timeRange, setTimeRange] = useState("all");
   const [sources, setSources] = useState<string[]>(["all"]);
+  const [activeTab, setActiveTab] = useState<"cards" | "manual">("cards");
 
   const [keywordInput, setKeywordInput] = useState("");
   const [authorInput, setAuthorInput] = useState("");
   const [categoryInput, setCategoryInput] = useState("");
+
+  // Use preference store
+  const { cards, selectedCardIds, toggleCardSelection } = usePreferenceStore();
+
+  // Get aggregated preferences from selected cards
+  const cardKeywords = getSelectedKeywords(cards, selectedCardIds);
+  const cardVenues = getSelectedVenues(cards, selectedCardIds);
+  const cardAuthors = getSelectedAuthors(cards, selectedCardIds);
 
   useEffect(() => {
     if (initialPreferences) {
       setKeywords(initialPreferences.keywords);
       setAuthors(initialPreferences.authors);
       setCategories(initialPreferences.categories);
+      setVenues(initialPreferences.venues || []);
       setTimeRange(initialPreferences.timeRange || "all");
       setSources(initialPreferences.sources || ["all"]);
     }
@@ -97,6 +112,19 @@ export function InterestsModal({
     setCategories(categories.filter((_, i) => i !== index));
   };
 
+  const [venueInput, setVenueInput] = useState("");
+
+  const addVenue = () => {
+    if (venueInput.trim() && !venues.includes(venueInput.trim())) {
+      setVenues([...venues, venueInput.trim()]);
+      setVenueInput("");
+    }
+  };
+
+  const removeVenue = (index: number) => {
+    setVenues(venues.filter((_, i) => i !== index));
+  };
+
   const toggleSource = (value: string) => {
     if (value === "all") {
       setSources(["all"]);
@@ -112,10 +140,22 @@ export function InterestsModal({
   };
 
   const handleSave = () => {
-    onSave({ keywords, authors, categories, timeRange, sources });
+    // Combine manual keywords with card-based keywords
+    const allKeywords = [...new Set([...keywords, ...cardKeywords])];
+    const allAuthors = [...new Set([...authors, ...cardAuthors])];
+    const allVenues = [...new Set([...venues, ...cardVenues])];
+
+    onSave({
+      keywords: allKeywords,
+      authors: allAuthors,
+      categories,
+      timeRange,
+      sources,
+      venues: allVenues,
+    });
     localStorage.setItem(
       "paperPulse_preferences",
-      JSON.stringify({ keywords, authors, categories, timeRange, sources })
+      JSON.stringify({ keywords: allKeywords, authors: allAuthors, categories, timeRange, sources, venues: allVenues })
     );
     onOpenChange(false);
   };
@@ -141,6 +181,90 @@ export function InterestsModal({
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
+          {/* Tab Switcher */}
+          <div className="flex gap-2 border-b border-border pb-2">
+            <button
+              onClick={() => setActiveTab("cards")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-t-md transition-colors ${
+                activeTab === "cards"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Tag className="h-4 w-4" />
+              标签卡
+            </button>
+            <button
+              onClick={() => setActiveTab("manual")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-t-md transition-colors ${
+                activeTab === "manual"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Settings className="h-4 w-4" />
+              手动输入
+            </button>
+          </div>
+
+          {/* Card-based Preferences */}
+          {activeTab === "cards" && (
+            <div className="space-y-4">
+              {cards.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Tag className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">还没有创建标签卡</p>
+                  <p className="text-xs mt-1">使用下方 AI 助手创建你的第一个偏好标签卡</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm font-medium mb-2">选择已保存的标签卡（可多选）</p>
+                  <div className="flex flex-wrap gap-2">
+                    {cards.map((card) => (
+                      <button
+                        key={card.id}
+                        onClick={() => toggleCardSelection(card.id)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                          selectedCardIds.includes(card.id)
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        }`}
+                      >
+                        {selectedCardIds.includes(card.id) && <Sparkles className="h-3 w-3" />}
+                        {card.name}
+                        <span className="text-xs opacity-70">({card.keywords.length + card.venues.length})</span>
+                      </button>
+                    ))}
+                  </div>
+                  {selectedCardIds.length > 0 && (
+                    <div className="mt-3 p-2 bg-muted rounded-md text-xs">
+                      <p className="font-medium mb-1">当前选择包含：</p>
+                      <p>关键词: {cardKeywords.slice(0, 5).join(", ")}{cardKeywords.length > 5 ? "..." : ""}</p>
+                      <p>刊物: {cardVenues.join(", ")}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* AI Preference Builder */}
+              <div className="border-t border-border pt-4">
+                <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  AI 智能创建标签卡
+                </p>
+                <PreferenceBuilder
+                  onGenerate={generatePreferenceSuggestions}
+                  onSaveCard={(card) => usePreferenceStore.getState().addCard(card)}
+                  existingCards={cards}
+                  maxCards={10}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Manual Input */}
+          {activeTab === "manual" && (
+            <div className="space-y-4">
           {/* Time Range */}
           <div>
             <label className="text-sm font-medium mb-2 flex items-center gap-2">
@@ -249,33 +373,64 @@ export function InterestsModal({
           </div>
 
           {/* Categories */}
-          <div>
-            <label className="text-sm font-medium mb-2 block">分类</label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="添加分类 (如: NLP)"
-                value={categoryInput}
-                onChange={(e) => setCategoryInput(e.target.value)}
-                onKeyPress={(e) => handleKeyPress(e, addCategory)}
-              />
-              <Button onClick={addCategory} variant="secondary">
-                添加
-              </Button>
+              <div>
+                <label className="text-sm font-medium mb-2 block">分类</label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="添加分类 (如: NLP)"
+                    value={categoryInput}
+                    onChange={(e) => setCategoryInput(e.target.value)}
+                    onKeyPress={(e) => handleKeyPress(e, addCategory)}
+                  />
+                  <Button onClick={addCategory} variant="secondary">
+                    添加
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {categories.map((cat, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/10 text-green-600 text-sm"
+                    >
+                      {cat}
+                      <button onClick={() => removeCategory(index)} className="hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+          {/* Venues */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">发表刊物 (CVPR, NeurIPS, IEEE等)</label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="添加刊物 (如: CVPR)"
+                    value={venueInput}
+                    onChange={(e) => setVenueInput(e.target.value)}
+                    onKeyPress={(e) => handleKeyPress(e, addVenue)}
+                  />
+                  <Button onClick={addVenue} variant="secondary">
+                    添加
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {venues.map((venue, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-purple-500/10 text-purple-600 text-sm"
+                    >
+                      {venue}
+                      <button onClick={() => removeVenue(index)} className="hover:text-destructive">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {categories.map((cat, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/10 text-green-600 text-sm"
-                >
-                  {cat}
-                  <button onClick={() => removeCategory(index)} className="hover:text-destructive">
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
+          )}
 
           <div className="flex gap-2 pt-4 border-t border-border">
             <Button onClick={handleSave} className="flex-1">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { getDailyPapers, getAllPapersList, Paper } from "@/lib/actions";
 import { PaperCard } from "@/components/paper-card";
@@ -51,7 +51,7 @@ function filterPapers(
   });
 }
 
-export default function HomePage() {
+function HomePage() {
   const searchParams = useSearchParams();
   const dateParam = searchParams?.get("date");
 
@@ -152,5 +152,17 @@ export default function HomePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function HomePageWithSuspense() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <HomePage />
+    </Suspense>
   );
 }

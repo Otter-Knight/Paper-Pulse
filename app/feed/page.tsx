@@ -14,6 +14,7 @@ const defaultPreferences = {
   categories: ["NLP", "Deep Learning"],
   timeRange: "all",
   sources: ["all"] as string[],
+  venues: [] as string[],
 };
 
 function filterPapers(
@@ -22,7 +23,8 @@ function filterPapers(
   authors: string[],
   categories: string[],
   timeRange: string,
-  sources: string[]
+  sources: string[],
+  venues: string[] = []
 ): Paper[] {
   const now = new Date();
 
@@ -73,6 +75,15 @@ function filterPapers(
       if (!hasCategory) return false;
     }
 
+    // Venue filter
+    if (venues.length > 0) {
+      if (!paper.venue) return false;
+      const hasVenue = venues.some((v) =>
+        paper.venue?.toLowerCase().includes(v.toLowerCase())
+      );
+      if (!hasVenue) return false;
+    }
+
     return true;
   });
 }
@@ -119,7 +130,8 @@ export default function FeedPage() {
       preferences.authors,
       preferences.categories,
       preferences.timeRange,
-      preferences.sources
+      preferences.sources,
+      preferences.venues
     );
   }, [allPapers, preferences]);
 
