@@ -72,7 +72,7 @@ export function PaperContentTabs({ paper }: PaperContentTabsProps) {
 
         {activeTab === "notes" && (
           <div className="animate-fade-in">
-            <StickyNotePanel paperId={paper.id} paperTitle={paper.title} />
+            <StickyNotePanel paperId={paper.id} paperTitle={paper.title} paperAuthors={paper.authors} />
           </div>
         )}
       </div>
